@@ -3,45 +3,57 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class UnitTurn : MonoBehaviour {
+public class UnitTurn : MonoBehaviour
+{
 
     private NavMeshAgent navMesh;
 
     private GameObject self_cache = null;
-    private GameObject closest;
+    private GameObject closest;                                     //A reference to the closest enemy
 
-    private Vector3 tempV;
-    private int index = 0;
+    private Vector3 tempV;                                          //A temporary Vector for the enemies, used to find which enemy is closest
+    private int index = 0;                                          //An index in the array for the closest enemy
 
     private PlayerController playerCon;
+    private PlayerStats playerStats;
     private MoveDistance moveDis;
     private CameraMove camMove;
     private GameManager gameManager;
 
-    public GameObject mainCam;
-    public GameObject line;
+    public GameObject mainCam;                                      //The Camera Holder
+    public GameObject line;                                         //The Characters move line
     public GameObject gm;
-    public GameObject[] enemy = new GameObject[3];
+    public GameObject[] enemy = new GameObject[3];                  //An array of enemies
 
     public Behaviour charHalo;
 
-    public bool charMove;
-    public bool charTurn;
-    public bool charSelect;
-    public bool charAction;
-    public bool charEnable;
+    public bool charMove;                                           //Is the character moving
+    public bool charTurn;                                           //Is it this characters turn
+    public bool charSelect;                                         //Can this character be selected
+    public bool charAction;                                         //Can this character still do an action
+    public bool charEnable;                                         //Is this character Enabled
+    public bool destinationSet;                                     //Has the destination been set
+    public bool exitTrigger = false;                                //Has the Character exited cover
 
-    public float currentVel = 0f;
-    public float moveDistance = 4f;
-    public float maxDistance = 10f;
+    public float currentVel = 0f;                                   //Velocity of the character
+    public float moveDistance = 4f;                                 //Distance the character can move and still use an action
+    public float maxDistance = 10f;                                 //The max distance a character can move
 
-    public int charId = 0;
-    public int rayId = 0;
+    public int charId = 0;                                          //The characters id
+    public int rayId = 0;                                           //Used for selecting another character
 
-    public Vector3 currentSpot;
-    public Vector3 rayDistance;
-    public Vector3 move;
-    public Vector3 groundNormal;
+    public Vector3 currentSpot;                                     //The current spot of the character
+    public Vector3 rayDistance;                                     //The location to move the character to
+    public Vector3 move;                                            //I need to remove this
+    //public Vector3 groundNormal;
+
+
+    public GameObject otherPlayer1;
+    public GameObject otherPlayer2;
+
+    public Vector3 otherVector1;                                    //The other characters Vectors
+    public Vector3 otherVector2;
+
 
     void Awake()
     {
@@ -55,17 +67,23 @@ public class UnitTurn : MonoBehaviour {
 
         playerCon = gameObject.GetComponent<PlayerController>();
 
+        playerStats = gameObject.GetComponent<PlayerStats>();
+
         charMove = false;
         charTurn = false;
         charSelect = true;
         charAction = true;
         charEnable = true;
+        destinationSet = false;
 
         navMesh = GetComponent<NavMeshAgent>();
         currentSpot = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+        otherVector1 = new Vector3(otherPlayer1.transform.position.x, otherPlayer1.transform.position.y, otherPlayer1.transform.position.z);
+        otherVector2 = new Vector3(otherPlayer2.transform.position.x, otherPlayer2.transform.position.y, otherPlayer2.transform.position.z);
+
     }
 
-	public void SelectCharacter()
+    public void SelectCharacter()
     {
         charSelect = true;
         rayId = gameObject.GetComponent<UnitTurn>().charId;
@@ -81,6 +99,7 @@ public class UnitTurn : MonoBehaviour {
         charTurn = false;
         charSelect = false;
         charAction = false;
+        destinationSet = false;
     }
 
     public void MoveActive()
@@ -94,6 +113,9 @@ public class UnitTurn : MonoBehaviour {
         charAction = true;
 
         currentSpot = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+        otherVector1 = new Vector3(otherPlayer1.transform.position.x, otherPlayer1.transform.position.y, otherPlayer1.transform.position.z);
+        otherVector2 = new Vector3(otherPlayer2.transform.position.x, otherPlayer2.transform.position.y, otherPlayer2.transform.position.z);
+
         charHalo.enabled = charEnable;
         line.SetActive(charEnable);
 
@@ -116,21 +138,36 @@ public class UnitTurn : MonoBehaviour {
         charSelect = true;
         charAction = true;
         charEnable = true;
+        destinationSet = false;
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    public void UndoMove()                          //Used to cancel moving a character
+    {
+        SelectCharacter();
+        charTurn = true;
+        charSelect = true;
+        charAction = true;
+        charEnable = true;
+        charMove = false;
+        destinationSet = false;
+        //moveDis.DisableLine();
+        line.SetActive(!charEnable);
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        if(charSelect == true && camMove.freeMove == true)
+        if (charSelect == true && camMove.freeMove == true)
         {
-            if(Input.GetButtonDown("Left Click"))
+            if (Input.GetButtonDown("Left Click"))
             {
-                if(Physics.Raycast(ray, out hit))
+                if (Physics.Raycast(ray, out hit))
                 {
-                    if(hit.transform.tag == "Player" && hit.transform.gameObject != gameObject)
+                    if (hit.transform.tag == "Player" && hit.transform.gameObject != gameObject)
                     {
                         if (hit.transform.gameObject.GetComponent<UnitTurn>().charSelect == false)
                         {
@@ -151,7 +188,7 @@ public class UnitTurn : MonoBehaviour {
             MoveCharacter();
         }
 
-	}
+    }
 
     public void MoveCharacter()
     {
@@ -162,46 +199,78 @@ public class UnitTurn : MonoBehaviour {
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        if(Input.GetButtonDown("Right Click"))
+        if (!destinationSet)
         {
-            if(Physics.Raycast(ray, out hit, 100, LayerMask.GetMask("Terrain")))
+            if (Input.GetButtonDown("Right Click"))
             {
-                rayDistance = new Vector3(hit.point.x, 0, hit.point.z);
-                if(hit.transform.tag != self_cache.tag)
-                {
-                    if (Mathf.Abs(Vector3.Distance(rayDistance, currentSpot)) >= maxDistance)   //distance is to far to travel
-                    {
-                        //play sound or something to say thats too far to move
-                        Debug.Log("That Distance is too far to travel");
+                destinationSet = true;
+                //if(Physics.Raycast(ray, out hit, 100, LayerMask.GetMask("Terrain"))) //with this disabled you can't select a spot for a character to move to through a character
+                if (Physics.Raycast(ray, out hit))                                     //but its only temporary because this (ray, out hit) is needed to detect if the character
+                {                                                                      //is entering cover or not
+                    if (!hit.collider.isTrigger)
+                    {                                       //Is the new area in a collider and a trigger
+                        exitTrigger = false;
                     }
-                    else if (Vector3.Distance(rayDistance, currentSpot) < maxDistance)
+                    else
                     {
-                        if (Vector3.Distance(rayDistance, currentSpot) <= moveDistance)         //the character can still take an action
+                        exitTrigger = true;
+                    }
+                    //if (hit.transform.tag == "Player" && hit.transform.gameObject != gameObject)
+                    //{
+
+                    //}
+                    rayDistance = new Vector3(hit.point.x, 0, hit.point.z);
+                    if (hit.transform.tag != self_cache.tag)
+                    {
+                        if (Mathf.Abs(Vector3.Distance(rayDistance, currentSpot)) >= maxDistance)   //distance is to far to travel
                         {
-                            currentSpot = rayDistance;
-                            moveDis.DisableLine();
-                            line.SetActive(!charEnable);
-                            if (hit.transform.tag != self_cache.tag)
+                            //play sound or something to say thats too far to move
+                            Debug.Log("That Distance is too far to travel");
+                        }
+                        else if (Mathf.Abs(Vector3.Distance(rayDistance, otherVector2)) < 1 || Mathf.Abs(Vector3.Distance(rayDistance, otherVector1)) < 1)      //Checks to see if the new location is too close to another player
+                        {
+                            //Display that you can't move where another character is standing
+                            Debug.Log("Test Distance");
+                        }
+                        else if (Vector3.Distance(rayDistance, currentSpot) < maxDistance)
+                        {
+                            if (Vector3.Distance(rayDistance, currentSpot) <= moveDistance)         //the character can still take an action
                             {
-                                if (navMesh.SetDestination(hit.point))
+                                currentSpot = rayDistance;
+                                moveDis.DisableLine();
+                                line.SetActive(!charEnable);
+                                if (hit.transform.tag != self_cache.tag)
                                 {
-                                    navMesh.isStopped = false;
-                                    StartCoroutine(WaitUntilReachTargetClose());        //makes everything wait until the character is done moving before the next action can be chosen
+                                    if (navMesh.SetDestination(hit.point))
+                                    {
+                                        navMesh.isStopped = false;
+                                        StartCoroutine(WaitUntilReachTargetClose());        //makes everything wait until the character is done moving before the next action can be chosen
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                UnActive();
+                                if (hit.transform.tag != self_cache.tag)
+                                {
+                                    if (navMesh.SetDestination(hit.point))
+                                    {
+                                        navMesh.isStopped = false;
+                                        StartCoroutine(WaitUntilReachTarget());
+                                    }
                                 }
                             }
                         }
-                        else
-                        {
-                            UnActive();
-                            if (hit.transform.tag != self_cache.tag)
-                            {
-                                if (navMesh.SetDestination(hit.point))
-                                {
-                                    navMesh.isStopped = false;
-                                    StartCoroutine(WaitUntilReachTarget());
-                                }
-                            }
-                        }
+                    }
+                }
+            }
+            else if(Input.GetButtonDown("Left Click"))                  //If the user left clicks the current player than undo the move
+            {
+                if(Physics.Raycast(ray, out hit))
+                {
+                    if(hit.transform.gameObject == gameObject)
+                    {
+                        gameManager.Reselect();
                     }
                 }
             }
@@ -209,14 +278,14 @@ public class UnitTurn : MonoBehaviour {
         playerCon.UpdateMove(move, rayDistance, currentVel);
     }
 
-    public void FindEnemies()
+    public void FindEnemies()                                       //Searches for nearby enemies
     {
         enemy = GameObject.FindGameObjectsWithTag("Enemy");
         if (enemy.Length != 0)                                                              //if an enemy is found
         {
             closest = enemy[0];
 
-            if (Vector3.Distance(currentSpot, closest.transform.position) > 10)      //checks to see if the enemies are out of range
+            if (Vector3.Distance(currentSpot, closest.transform.position) > playerStats.maxDistance)      //checks to see if the enemies are out of range
             {
                 Debug.Log(currentSpot);
                 Debug.Log(closest.transform.position);
@@ -225,7 +294,7 @@ public class UnitTurn : MonoBehaviour {
                 //Display a message that says no enemies are in range
                 Debug.Log("No Enemies in range");
             }
-            else if (Vector3.Distance(currentSpot, closest.transform.position) < 10) //the enemies are in range
+            else if (Vector3.Distance(currentSpot, closest.transform.position) < playerStats.maxDistance) //the enemies are in range
             {
                 GameObject[] tempEnemy = new GameObject[enemy.Length];                      //temp array to hold the enemies
 
@@ -251,6 +320,7 @@ public class UnitTurn : MonoBehaviour {
                 {
                     enemy[i] = tempEnemy[i];
                 }
+                playerCon.CharacterAim();                                                   //Have the Character aim at the enemies
                 gameManager.CycleThroughEnemies(enemy, index);                               //sends the enemies to the gameManager to cycle through which one to attack
             }
         }
@@ -265,8 +335,12 @@ public class UnitTurn : MonoBehaviour {
     {
         yield return new WaitForSeconds(0.025f);
         yield return new WaitUntil(() => navMesh.remainingDistance == 0);
-        if(navMesh.remainingDistance == 0)
+        if (navMesh.remainingDistance == 0)
         {
+            if (!exitTrigger)                   //if the player leaves cover then reset the stance
+            {
+                playerCon.trigger = false;
+            }
             playerCon.StopMoving();
         }
         charMove = false;
@@ -277,8 +351,12 @@ public class UnitTurn : MonoBehaviour {
     {
         yield return new WaitForSeconds(0.025f);
         yield return new WaitUntil(() => navMesh.remainingDistance == 0);
-        if(navMesh.remainingDistance == 0)
+        if (navMesh.remainingDistance == 0)
         {
+            if (!exitTrigger)               //if the player leaves cover then reset the stance
+            {
+                playerCon.trigger = false;
+            }
             playerCon.StopMoving();
         }
         charTurn = false;

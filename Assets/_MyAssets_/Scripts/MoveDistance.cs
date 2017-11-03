@@ -12,6 +12,7 @@ public class MoveDistance : MonoBehaviour
 
     private RaycastHit hit;
     private Ray ray;
+    private UnitTurn uTurn;
 
     public GameObject player;
 
@@ -26,6 +27,7 @@ public class MoveDistance : MonoBehaviour
 
     void Start()
     {
+        uTurn = player.GetComponent<UnitTurn>();
         line = GetComponent<LineRenderer>();
 
         line.material = moveDis;                    //colors the line to move Distance
@@ -40,8 +42,12 @@ public class MoveDistance : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, 100, LayerMask.GetMask("Terrain")))   //gets the location of the mouse relative to where it is pointing on the plane/ground
         {
-            currLineDis = new Vector3(hit.point.x, 0, hit.point.z);             //updates where the line should be drawn to
-            if (Vector3.Distance(currLineDis, lineDis) <= 4)                    //if the distance between the mouse and the character is 4 or less (move distance) make the line green
+            currLineDis = new Vector3(hit.point.x, hit.point.y, hit.point.z);             //updates where the line should be drawn to
+            if (Vector3.Distance(currLineDis, uTurn.otherVector1) < 1 || Vector3.Distance(currLineDis, uTurn.otherVector2) < 1)
+            {
+                line.material = farDis;
+            }
+            else if (Vector3.Distance(currLineDis, lineDis) <= 4)                    //if the distance between the mouse and the character is 4 or less (move distance) make the line green
             {
                 line.material = moveDis;
             }
@@ -54,20 +60,29 @@ public class MoveDistance : MonoBehaviour
                 line.material = farDis;
             }
 
-            mousePos = new Vector3(hit.point.x, 0, hit.point.z);
+            mousePos = new Vector3(hit.point.x, hit.point.y, hit.point.z);
+            //mousePos = new Vector3(hit.point.x, 0, hit.point.z);
             line.SetPosition(0, charPos);                               //draws the line at the start point
             line.SetPosition(1, mousePos);                              //draws the line at the end point
         }
     }
 
+    public void RedLine()
+    {
+        line.material = farDis;
+    }
+
     public void EnableLine()                                            //if the character is selected to move then turn on the line/ update the new positions
     {
-        charPos = new Vector3(player.transform.position.x, 0, player.transform.position.z);
-        lineDis = new Vector3(charPos.x, 0, charPos.z);
+        //charPos = new Vector3(player.transform.position.x, 0, player.transform.position.z);
+        //lineDis = new Vector3(charPos.x, 0, charPos.z);
+        charPos = new Vector3(player.transform.position.x, player.transform.position.y, player.transform.position.z);
+        lineDis = new Vector3(charPos.x, charPos.y, charPos.z);
     }
     public void DisableLine()
     {
-        charPos = new Vector3(player.transform.position.x, 0, player.transform.position.z); //once the character has moved update the characters positon
+        //charPos = new Vector3(player.transform.position.x, 0, player.transform.position.z); //once the character has moved update the characters positon
+        charPos = new Vector3(player.transform.position.x, player.transform.position.y, player.transform.position.z); //once the character has moved update the characters positon
     }
 
 }

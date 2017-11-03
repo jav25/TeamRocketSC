@@ -11,7 +11,7 @@ public class GameManager : MonoBehaviour
 
     private CameraMove camMove;
     private UnitTurn uTurn;
-    //private PlayerController playerCon;
+    private PlayerController playerCon;
     private PlayerStats playerStats;
     private EnemyStats enemyStats;
 
@@ -66,10 +66,9 @@ public class GameManager : MonoBehaviour
 
         playerStats = currentPlayer.GetComponent<PlayerStats>();
 
-        //playerCon = currentPlayer.GetComponent<PlayerController>();
+        playerCon = currentPlayer.GetComponent<PlayerController>();
         uTurn = currentPlayer.GetComponent<UnitTurn>();
 
-        //playerCon.charId = charId;
         uTurn.charId = charId;
 
         playerTeam[charId + 1].GetComponent<UnitTurn>().charId = charId + 1;
@@ -105,8 +104,10 @@ public class GameManager : MonoBehaviour
     {
         camMove.player = currentPlayer;
         camMove.playerCam = currentPlayer.transform.GetChild(5).gameObject;
+        playerCon = currentPlayer.GetComponent<PlayerController>();
         uTurn = currentPlayer.GetComponent<UnitTurn>();
         uTurn.charTurn = playerTurn;
+        playerCon.enabled = playerTurn;
         uTurn.enabled = true;
         uTurn.SelectCharacter();
         playerStats = currentPlayer.GetComponent<PlayerStats>();
@@ -145,7 +146,7 @@ public class GameManager : MonoBehaviour
         {
             int tempId = uTurn.rayId;
 
-            DeactivateCharacters();
+            //DeactivateCharacters();
             currentPlayer = playerTeam[tempId];
             if (currentPlayer == playerTeam[charId])
             {
@@ -168,10 +169,18 @@ public class GameManager : MonoBehaviour
         {
             int tempId = uTurn.rayId;
             nextPlayer = currentPlayer;
-            DeactivateCharacters();
+            //DeactivateCharacters();
             currentPlayer = playerTeam[tempId];
             Setup();
         }
+    }
+
+    public void Reselect()
+    {
+        uTurn.UndoMove();
+        camMove.FlipCamera();
+        playerActions.SetActive(playerTurn);
+        moveButton.gameObject.SetActive(true);
     }
 
     public void PlayerTurn()
@@ -181,10 +190,12 @@ public class GameManager : MonoBehaviour
             if (enemyTurn == false)
             {
                 uTurn.charHalo.enabled = playerTurn;
+                playerCon.enabled = playerTurn;
                 if (uTurn.charAction == false)              //if the character can still do an action
                 {
                     playerActions.SetActive(playerTurn);
                     moveButton.gameObject.SetActive(false);
+                    playerCon.trigger = false;
                     uTurn.charAction = true;
                 }
                 else if (uTurn.charTurn == false)           //if a character used their turn moving
@@ -192,6 +203,8 @@ public class GameManager : MonoBehaviour
                     uTurn.TurnOver();
                     camMove.FlipCamera();
                     uTurn.enabled = false;
+                    playerCon.trigger = false;
+                    playerCon.enabled = false;
                     GetNextPlayer();
                 }
 
@@ -209,6 +222,7 @@ public class GameManager : MonoBehaviour
         {
             currentPlayer = playerTeam[i];
             uTurn = currentPlayer.GetComponent<UnitTurn>();
+            playerCon = currentPlayer.GetComponent<PlayerController>();
             uTurn.NewTurn();
         }
 
@@ -216,6 +230,8 @@ public class GameManager : MonoBehaviour
         camMove.player = currentPlayer;
         camMove.playerCam = currentPlayer.transform.GetChild(5).gameObject;
         uTurn = currentPlayer.GetComponent<UnitTurn>();
+        playerCon = currentPlayer.GetComponent<PlayerController>();
+        playerStats = currentPlayer.GetComponent<PlayerStats>();
         nextPlayer = playerTeam[charId + 1];
         lastPlayer = playerTeam[charId + 2];
         playerTurn = false;
@@ -265,7 +281,6 @@ public class GameManager : MonoBehaviour
     {
         playerActions.SetActive(playerTurn);
         moveButton.gameObject.SetActive(playerTurn);
-        //playerCon.NewTurn();                              //dont remember what this does
     }
 
     public void ActivateCharacters()                            //Activates a character to move
@@ -280,22 +295,40 @@ public class GameManager : MonoBehaviour
 
     public void DeactivateCharacters()                          //Deactivates a character
     {
-        uTurn.enabled = false;
+        //use this for dead players
+        //uTurn.enabled = false;
+        //playerCon.enabled = false;
     }
 
     public void EndTurn()                                       //End Turn button
     {
         uTurn.TurnOver();
         camMove.FlipCamera();
+        playerCon.trigger = false;
+        playerCon.enabled = false;
         GetNextPlayer();
     }
 
-    public void Attack()                                        //Attack button
+    public void AttackTurn()                                        //Attack button
     {
+        //need to flip off all the other switches so that the player can only attack
         uTurn.FindEnemies();
     }
 
-    public void CycleThroughEnemies(GameObject[] Team, int enemyCount)      //receives the enemies that are close to the player
+    public void AttackEnemy()
+    {
+        tempTeam[0].GetComponent<EnemyStats>().TakeDamage(playerStats.AttackDamage());
+        slider.value = tempTeam[0].GetComponent<EnemyStats>().health;
+        for(int i = 0; i < enemyCam.Length; i++)
+        {
+            enemyCam[i].SetActive(false);
+        }
+        enemyDisplay.SetActive(false);
+        camHolder.SetActive(true);
+        EndTurn();
+    }
+
+    public void CycleThroughEnemies(GameObject[] Team, int index)      //receives the enemies that are close to the player
     {
         playerActions.SetActive(false);
         if(camHolder.GetComponent<CameraMove>().freeMove == true)
@@ -308,11 +341,11 @@ public class GameManager : MonoBehaviour
             camHolder.SetActive(false);
         }
         enemyDisplay.SetActive(true);
-        enemyCam[enemyCount].SetActive(true);
-        eCount = enemyCount;
+        enemyCam[index].SetActive(true);
+        eCount = index;
         tempTeam = Team;
-        slider.maxValue = tempTeam[enemyCount].GetComponent<EnemyStats>().maxHealth;
-        slider.value = enemyTeam[enemyCount].GetComponent<EnemyStats>().health;
+        slider.maxValue = tempTeam[index].GetComponent<EnemyStats>().maxHealth;
+        slider.value = enemyTeam[index].GetComponent<EnemyStats>().health;
     }
 
     public void PreviousEnemy()                                             //cycles to the last nearEnemy in the array
@@ -320,8 +353,8 @@ public class GameManager : MonoBehaviour
         //int temp = tempTeam[charId];
         enemyCam[eCount].SetActive(false);
         enemyCam[tempTeam[charId + 2].gameObject.GetComponent<UnitTurn>().charId].SetActive(true);
-        slider.maxValue = tempTeam[charId + 2].GetComponent<EnemyStats>().maxHealth;
-        slider.value = enemyTeam[charId + 2].GetComponent<EnemyStats>().health;
+        //slider.maxValue = tempTeam[charId + 2].GetComponent<EnemyStats>().maxHealth;
+        //slider.value = enemyTeam[charId + 2].GetComponent<EnemyStats>().health;
         RotateEnemyTeam(2);
     }
 
@@ -329,8 +362,8 @@ public class GameManager : MonoBehaviour
     {
         enemyCam[eCount].SetActive(false);
         enemyCam[tempTeam[charId + 1].gameObject.GetComponent<UnitTurn>().charId].SetActive(true);
-        slider.maxValue = tempTeam[charId + 1].GetComponent<EnemyStats>().maxHealth;
-        slider.value = enemyTeam[charId + 1].GetComponent<EnemyStats>().health;
+        //slider.maxValue = tempTeam[charId + 1].GetComponent<EnemyStats>().maxHealth;
+        //slider.value = enemyTeam[charId + 1].GetComponent<EnemyStats>().health;
         RotateEnemyTeam(1);
     }
 
@@ -348,6 +381,8 @@ public class GameManager : MonoBehaviour
                 tempTeam[i] = dummyTemp[i];
             }
             eCount = tempTeam[0].gameObject.GetComponent<UnitTurn>().charId;
+            slider.maxValue = tempTeam[0].GetComponent<EnemyStats>().maxHealth;
+            slider.value = tempTeam[0].GetComponent<EnemyStats>().health;
         }
         else if(dummy == 1)
         {
@@ -361,6 +396,8 @@ public class GameManager : MonoBehaviour
                 tempTeam[i] = dummyTemp[i];
             }
             eCount = tempTeam[0].gameObject.GetComponent<UnitTurn>().charId;
+            slider.maxValue = tempTeam[0].GetComponent<EnemyStats>().maxHealth;
+            slider.value = tempTeam[0].GetComponent<EnemyStats>().health;
         }
     }
 

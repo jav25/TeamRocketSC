@@ -83,16 +83,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   turnCount: 0
   playerTeam:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 1078570511020664, guid: 6fcaf02e3c7365d4ca3991670b002a57, type: 2}
+  - {fileID: 1232130007053956, guid: 37c9aafb9196e464c947ca50e80ebe54, type: 2}
+  - {fileID: 1987333080108154, guid: 4eaa5b1df7a03d047ab59629e24a6732, type: 2}
   enemyTeam:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 1415233024205704, guid: a5f557fd06039974a939089b0397e4c0, type: 2}
+  - {fileID: 1190875418698128, guid: cd622c891b911bd4a915568584a1aa2c, type: 2}
+  - {fileID: 1858260577427474, guid: 5430bca7e32eeb74ab3ad933bb27ad6f, type: 2}
   currentPlayer: {fileID: 0}
-  camHolder: {fileID: 0}
-  enemyHolder: {fileID: 0}
+  camHolder: {fileID: 1611026803135434, guid: d8f4da33e7dbf694a9cf135d2102c88a, type: 2}
+  enemyHolder: {fileID: 1366003306670002, guid: 1d81e5cb2e8450342ae8bb1e50dba743,
+    type: 2}
   playerActions: {fileID: 0}
   slider: {fileID: 0}
   moveButton: {fileID: 0}

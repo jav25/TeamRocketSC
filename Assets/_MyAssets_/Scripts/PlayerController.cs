@@ -14,7 +14,7 @@ public class PlayerController : MonoBehaviour
 
     public float currentVel = 0;
 
-    public bool enter = false;
+    public bool enable = false;
     public bool trigger = false;
 
     public int tempDir;
@@ -25,6 +25,11 @@ public class PlayerController : MonoBehaviour
     {
         anim = GetComponent<Animator>();
         uTurn = GetComponent<UnitTurn>();
+    }
+
+    void Start()
+    {
+
     }
 
     public void UpdateMove(Vector3 move, Vector3 target, float speed)
@@ -90,17 +95,35 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void OnTriggerEnter(Collider other)
+    public void CharacterAim()
     {
-        enter = true;
-        tempDir = other.gameObject.GetComponent<CoverManager>().FindDirection();
-        tempTag = other.gameObject.GetComponent<CoverManager>().parentTag;
+        anim.SetBool("Aim", true);
+        if (tempDir == 1)
+        {
+            StartCoroutine(RotateToFaceDirection(Vector3.forward));
+        }
+        else if (tempDir == 0)
+        {
+            StartCoroutine(RotateToFaceDirection(-Vector3.forward));
+        }
+        else if (tempDir == 3)
+        {
+            StartCoroutine(RotateToFaceDirection(Vector3.right));
+        }
+        else if (tempDir == 2)
+        {
+            StartCoroutine(RotateToFaceDirection(-Vector3.right));
+        }
     }
 
-    public void OnTriggerExit(Collider other)
+    public void OnTriggerEnter(Collider other)
     {
-        trigger = false;
-        enter = false;
+        if (enabled)
+        {
+            trigger = true;
+            tempDir = other.gameObject.GetComponent<CoverManager>().FindDirection();
+            tempTag = other.gameObject.GetComponent<CoverManager>().parentTag;
+        }
     }
 
     IEnumerator RotateToFaceDirection(Vector3 targetDir, bool aimAtTheEnd = false)
