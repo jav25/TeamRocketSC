@@ -1503,6 +1503,11 @@ Prefab:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 114006125694292602, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 224870738729701680, guid: 9a767e9159a572d498c4e8034354d082,
         type: 2}
       propertyPath: m_LocalPosition.x
@@ -1690,7 +1695,7 @@ Prefab:
     - target: {fileID: 114547195521437708, guid: 9a767e9159a572d498c4e8034354d082,
         type: 2}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
-      value: Attack
+      value: AttackTurn
       objectReference: {fileID: 0}
     - target: {fileID: 114093882810600196, guid: 9a767e9159a572d498c4e8034354d082,
         type: 2}
@@ -1711,6 +1716,55 @@ Prefab:
         type: 2}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
       value: ResetScene
+      objectReference: {fileID: 0}
+    - target: {fileID: 114866588702145194, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 662999954}
+    - target: {fileID: 114866588702145194, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: PreviousEnemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 114780221542966828, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 662999954}
+    - target: {fileID: 114780221542966828, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: NextEnemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 114006125694292602, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 114006125694292602, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 114006125694292602, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 662999954}
+    - target: {fileID: 114006125694292602, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: AttackEnemy
+      objectReference: {fileID: 0}
+    - target: {fileID: 114006125694292602, guid: 9a767e9159a572d498c4e8034354d082,
+        type: 2}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 1409927697208350, guid: 9a767e9159a572d498c4e8034354d082, type: 2}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 9a767e9159a572d498c4e8034354d082, type: 2}
@@ -2921,17 +2975,17 @@ Prefab:
         type: 2}
       propertyPath: playerTeam.Array.data[0]
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 75701466}
     - target: {fileID: 114629731553037314, guid: 19f702e5b205dd94ba598533f0a8c499,
         type: 2}
       propertyPath: playerTeam.Array.data[1]
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 75701465}
     - target: {fileID: 114629731553037314, guid: 19f702e5b205dd94ba598533f0a8c499,
         type: 2}
       propertyPath: playerTeam.Array.data[2]
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 75701464}
     - target: {fileID: 114629731553037314, guid: 19f702e5b205dd94ba598533f0a8c499,
         type: 2}
       propertyPath: camHolder
