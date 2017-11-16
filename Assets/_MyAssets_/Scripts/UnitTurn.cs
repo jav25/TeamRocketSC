@@ -86,6 +86,7 @@ public class UnitTurn : MonoBehaviour
     public void SelectCharacter()
     {
         charSelect = true;
+        currentSpot = new Vector3(transform.position.x, transform.position.y, transform.position.z);
         rayId = gameObject.GetComponent<UnitTurn>().charId;
     }
 
@@ -127,7 +128,7 @@ public class UnitTurn : MonoBehaviour
     {
         currentSpot = rayDistance;
         moveDis.DisableLine();
-        charHalo.enabled = !charEnable;
+        gameManager.currentPlayer.GetComponent<UnitTurn>().charHalo.enabled = !charEnable;
         line.SetActive(!charEnable);
     }
 
@@ -150,7 +151,7 @@ public class UnitTurn : MonoBehaviour
         charEnable = true;
         charMove = false;
         destinationSet = false;
-        //moveDis.DisableLine();
+        moveDis.DisableLine();
         line.SetActive(!charEnable);
     }
 
@@ -163,11 +164,11 @@ public class UnitTurn : MonoBehaviour
 
         if (charSelect == true && camMove.freeMove == true)
         {
-            if (Input.GetButtonDown("Left Click"))
+            if (Input.GetButtonDown("Left Click") && gameManager.currentPlayer.GetComponent<UnitTurn>().destinationSet == false)
             {
                 if (Physics.Raycast(ray, out hit))
                 {
-                    if (hit.transform.tag == "Player" && hit.transform.gameObject != gameObject)
+                    if (hit.transform.tag == "Player" && hit.transform.gameObject != gameManager.currentPlayer)
                     {
                         if (hit.transform.gameObject.GetComponent<UnitTurn>().charSelect == false)
                         {
@@ -175,7 +176,7 @@ public class UnitTurn : MonoBehaviour
                         }
                         else
                         {
-                            rayId = hit.transform.gameObject.GetComponent<UnitTurn>().charId;
+                            gameManager.currentPlayer.GetComponent<UnitTurn>().rayId = hit.transform.gameObject.GetComponent<UnitTurn>().charId;
                             UnActive();
                             gameManager.ChangeCharacters();
                         }
@@ -204,9 +205,8 @@ public class UnitTurn : MonoBehaviour
             if (Input.GetButtonDown("Right Click"))
             {
                 destinationSet = true;
-                //if(Physics.Raycast(ray, out hit, 100, LayerMask.GetMask("Terrain"))) //with this disabled you can't select a spot for a character to move to through a character
-                if (Physics.Raycast(ray, out hit))                                     //but its only temporary because this (ray, out hit) is needed to detect if the character
-                {                                                                      //is entering cover or not
+                if (Physics.Raycast(ray, out hit, 100, LayerMask.GetMask("Terrain")))
+                {
                     if (!hit.collider.isTrigger)
                     {                                       //Is the new area in a collider and a trigger
                         exitTrigger = false;
@@ -225,11 +225,13 @@ public class UnitTurn : MonoBehaviour
                         if (Mathf.Abs(Vector3.Distance(rayDistance, currentSpot)) >= maxDistance)   //distance is to far to travel
                         {
                             //play sound or something to say thats too far to move
+                            destinationSet = false;
                             Debug.Log("That Distance is too far to travel");
                         }
                         else if (Mathf.Abs(Vector3.Distance(rayDistance, otherVector2)) < 1 || Mathf.Abs(Vector3.Distance(rayDistance, otherVector1)) < 1)      //Checks to see if the new location is too close to another player
                         {
                             //Display that you can't move where another character is standing
+                            destinationSet = false;
                             Debug.Log("Test Distance");
                         }
                         else if (Vector3.Distance(rayDistance, currentSpot) < maxDistance)
@@ -263,12 +265,13 @@ public class UnitTurn : MonoBehaviour
                         }
                     }
                 }
+
             }
-            else if(Input.GetButtonDown("Left Click"))                  //If the user left clicks the current player than undo the move
+            else if (Input.GetButtonDown("Left Click"))                  //If the user left clicks the current player then undo the move
             {
-                if(Physics.Raycast(ray, out hit))
+                if (Physics.Raycast(ray, out hit))
                 {
-                    if(hit.transform.gameObject == gameObject)
+                    if (hit.transform.gameObject == gameObject)
                     {
                         gameManager.Reselect();
                     }
@@ -280,54 +283,81 @@ public class UnitTurn : MonoBehaviour
 
     public void FindEnemies()                                       //Searches for nearby enemies
     {
-        enemy = GameObject.FindGameObjectsWithTag("Enemy");
-        if (enemy.Length != 0)                                                              //if an enemy is found
+        //if (team == "Player")
+        //{
+            enemy = GameObject.FindGameObjectsWithTag("Enemy");
+        //}
+        //else if(team == "Enemy")
+        //{
+        //    enemy = GameObject.FindGameObjectsWithTag("Player");
+        //}
+
+        if(enemy.Length != 0)
         {
-            closest = enemy[0];
-
-            if (Vector3.Distance(currentSpot, closest.transform.position) > playerStats.maxDistance)      //checks to see if the enemies are out of range
+            index = 2;
+            for(int i = 0; i < enemy.Length; i++)
             {
-                Debug.Log(currentSpot);
-                Debug.Log(closest.transform.position);
-                Debug.Log(Vector3.Distance(currentSpot, closest.transform.position));
-                closest = null;
-                //Display a message that says no enemies are in range
-                Debug.Log("No Enemies in range");
-            }
-            else if (Vector3.Distance(currentSpot, closest.transform.position) < playerStats.maxDistance) //the enemies are in range
-            {
-                GameObject[] tempEnemy = new GameObject[enemy.Length];                      //temp array to hold the enemies
-
-                for (int i = 0; i < enemy.Length; i++)
+                if(Vector3.Distance(currentSpot, enemy[i].transform.position) > playerStats.maxDistance)
                 {
-                    tempEnemy[i] = enemy[i];
-                    if (Vector3.Distance(enemy[i].transform.position, currentSpot) < Vector3.Distance(tempV, currentSpot))    //gets the closest enemy to the player
-                    {
-                        closest = enemy[i];
-                        index = i;
-                        tempV = closest.transform.position;
-                    }
+                    //Display enemy is too far 0% chance of hit
+                    Debug.Log(enemy[i]);
                 }
-
-                tempEnemy[0] = closest;                                                     //sets the closest enemy to the first spot in the temp array
-                enemy[index] = enemy[0];                                                     //shifts the first enemy to the location of the closest enemy
-
-                for (int i = index; i < tempEnemy.Length; i++)                               //adds the rest of the enemies to the temp array
+                else
                 {
-                    tempEnemy[i] = enemy[i];
+                    gameManager.CycleThroughEnemies();
                 }
-                for (int i = 0; i < tempEnemy.Length; i++)                                  //adds the sorted list of enemies back into the enemy array
-                {
-                    enemy[i] = tempEnemy[i];
-                }
-                playerCon.CharacterAim();                                                   //Have the Character aim at the enemies
-                gameManager.CycleThroughEnemies(enemy, index);                               //sends the enemies to the gameManager to cycle through which one to attack
             }
         }
-        else                                                            //will be probably used for determining if all enemies are dead then mission accomplished
-        {
-            Debug.Log("NO ENEMIES WAHH");
-        }
+
+        //enemy = GameObject.FindGameObjectsWithTag("Enemy");
+        //if (enemy.Length != 0)                                                              //if an enemy is found
+        //{
+        //    closest = enemy[0];
+
+        //    if (Vector3.Distance(currentSpot, closest.transform.position) > playerStats.maxDistance)      //checks to see if the enemies are out of range
+        //    {
+        //        Debug.Log(currentSpot);
+        //        Debug.Log(closest.transform.position);
+        //        Debug.Log(Vector3.Distance(currentSpot, closest.transform.position));
+        //        closest = null;
+        //        //Display a message that says no enemies are in range
+        //        Debug.Log("No Enemies in range");
+        //    }
+        //    else if (Vector3.Distance(currentSpot, closest.transform.position) < playerStats.maxDistance) //the enemies are in range
+        //    {
+        //        GameObject[] tempEnemy = new GameObject[enemy.Length];                      //temp array to hold the enemies
+
+        //        for (int i = 0; i < enemy.Length; i++)
+        //        {
+        //            tempEnemy[i] = enemy[i];
+        //            if (Vector3.Distance(enemy[i].transform.position, currentSpot) < Vector3.Distance(tempV, currentSpot))    //gets the closest enemy to the player
+        //            {
+        //                closest = enemy[i];
+        //                index = i;
+        //                tempV = closest.transform.position;
+        //            }
+        //        }
+
+        //        tempEnemy[0] = closest;                                                     //sets the closest enemy to the first spot in the temp array
+        //        enemy[index] = enemy[0];                                                     //shifts the first enemy to the location of the closest enemy
+
+        //        for (int i = index; i < tempEnemy.Length; i++)                               //adds the rest of the enemies to the temp array
+        //        {
+        //            tempEnemy[i] = enemy[i];
+        //        }
+        //        for (int i = 0; i < tempEnemy.Length; i++)                                  //adds the sorted list of enemies back into the enemy array
+        //        {
+        //            enemy[i] = tempEnemy[i];
+        //        }
+        //        playerCon.CharacterAim();                                                   //Have the Character aim at the enemies
+        //        index = enemy[0].gameObject.GetComponent<UnitTurn>().charId;
+        //        gameManager.CycleThroughEnemies(enemy, index);                               //sends the enemies to the gameManager to cycle through which one to attack
+        //    }
+        //}
+        //else                                                            //will be probably used for determining if all enemies are dead then mission accomplished
+        //{
+        //    Debug.Log("NO ENEMIES WAHH");
+        //}
 
     }
 

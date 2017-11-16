@@ -11,7 +11,7 @@ public class PlayerStats : MonoBehaviour
     private GameManager gameManager;
     //private PlayerStats playerStats;
 
-    public int maxHealth = 100;
+    public int maxHealth = 105;
     public int health;
     public int coverBonus;
     public int armor;
@@ -46,23 +46,23 @@ public class PlayerStats : MonoBehaviour
             remainingAmmo = ammo;
             fireRate = 3;
             weaponDistance = 8; //if an enemy character is within the weaponDistance increase the accuracy
-            weaponDamage = 8;
+            weaponDamage = 10;
             armor = 10;
         }
         else if(charClass == "Heavy")
         {
-            ammo = 4;
+            ammo = 12;
             remainingAmmo = ammo;
-            fireRate = 1;
+            fireRate = 3;
             weaponDistance = 6;
             weaponDamage = 15;
             armor = 15;
         }
         else if(charClass == "Ranger")
         {
-            ammo = 6;
+            ammo = 12;
             remainingAmmo = ammo;
-            fireRate = 1;
+            fireRate = 3;
             weaponDistance = 12;
             weaponDamage = 10;
             armor = 8;
@@ -83,7 +83,7 @@ public class PlayerStats : MonoBehaviour
 
     int GetAmmo()
     {
-        return ammo;
+        return remainingAmmo;
     }
 
     int GetHealth()
@@ -99,9 +99,10 @@ public class PlayerStats : MonoBehaviour
         return attack;
     }
 
-    public void FireGun()
+    public int FireGun()
     {
         remainingAmmo -= fireRate;
+        return remainingAmmo;
     }
 
     public void ReloadGun()
@@ -109,9 +110,10 @@ public class PlayerStats : MonoBehaviour
         remainingAmmo = ammo;
     }
 
-    public void TakeDamage(int damage)
+    public int TakeDamage(int damage)
     {
         health -= damage;
+        return health;
     }
 
 }

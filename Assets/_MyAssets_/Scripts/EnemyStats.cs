@@ -10,7 +10,7 @@ public class EnemyStats : MonoBehaviour {
 
     private GameManager gameManager;
 
-    public int maxHealth = 100;
+    public int maxHealth = 105;
     public int health;
     public int attack = 10;
     public int coverBonus;
@@ -37,9 +37,10 @@ public class EnemyStats : MonoBehaviour {
         return health;
     }
 
-    public void TakeDamage(int damage)
+    public int TakeDamage(int damage)
     {
         health -= damage;
+        return health;
     }
 
 }

@@ -23,6 +23,7 @@ public class GameManager : MonoBehaviour
     private GameObject nextPlayer;
     private GameObject lastPlayer;
     private GameObject[] nextTeam = new GameObject[3];              //used for holding the next team up
+    public static GameObject[] enemyOrder = new GameObject[3];
 
     public GameObject[] playerTeam = new GameObject[3];             //an array of player characters
     public GameObject[] enemyTeam = new GameObject[3];              //an array of enemy characters, used for controlling both teams on one computer
@@ -31,13 +32,34 @@ public class GameManager : MonoBehaviour
     public GameObject enemyHolder;                                  //Holds the enemy Camera Holder, used for controlling both teams on one computer
     public GameObject playerActions;                                //PlayerActions Hud
 
-    public Slider slider;                                           //displays enemy health
+    public Image pSlider;
+    public Image eSlider;
+    public Image aSlider;
+    public Image healthBar;
+    public Image emptyBar;
+    public Image enemyBar;
+    public Image ammoBar;
+
+    public GameObject[] healthImages = new GameObject[21];
+    public GameObject[] enemyImages = new GameObject[21];
+    public GameObject[] ammoImages = new GameObject[12];
+    //public int pHealthCount;
+    //public int eHealthCount;
+
+    //public GameObject[] playerHealth = new GameObject[21];
+
+    //public Slider eSlider;                                           //displays enemy health
+
+    public Text characterName;
+    public Text characterClass;
+    public Text characterHealth;
+    public Text characterAmmo;
+    public Text enemyName;
+    public Text enemyHealth;
 
     public Button moveButton;
 
     public GameObject[] enemyCam = new GameObject[3];               //used for cycling between which enemy to attack
-
-    public GameObject[] tempTeam;                                   //holds the enemies when the attack button is pressed
 
     public GameObject enemyDisplay;                                 //HUD for cycling between which enemy to attack
 
@@ -55,19 +77,36 @@ public class GameManager : MonoBehaviour
         camMove = camHolder.GetComponent<CameraMove>();
 
         currentPlayer = playerTeam[charId];
-
+        characterName.text = currentPlayer.name;
         //testing both teams on one computer
         //nextTeam = playerTeam;
         //nextCam = camHolder;
         //
 
-        slider.maxValue = enemyTeam[0].GetComponent<EnemyStats>().maxHealth;
-        slider.value = enemyTeam[0].GetComponent<EnemyStats>().health;
+        //eSlider.maxValue = enemyTeam[0].GetComponent<EnemyStats>().maxHealth;
+        //eSlider.value = enemyTeam[0].GetComponent<EnemyStats>().health;
 
         playerStats = currentPlayer.GetComponent<PlayerStats>();
+        characterClass.text = playerStats.charClass;
+        characterHealth.text = playerStats.health + "/" + playerStats.maxHealth;
+        characterAmmo.text = playerStats.remainingAmmo + "/" + playerStats.ammo;
+
+        for (int i = 0; i < healthImages.Length; i++)
+        {
+            healthImages[i] = pSlider.gameObject.transform.GetChild(i).gameObject;
+            enemyImages[i] = eSlider.gameObject.transform.GetChild(i).gameObject;
+        }
+        for(int i = 0; i < ammoImages.Length; i++)
+        {
+            ammoImages[i] = aSlider.gameObject.transform.GetChild(i).gameObject;
+        }
 
         playerCon = currentPlayer.GetComponent<PlayerController>();
         uTurn = currentPlayer.GetComponent<UnitTurn>();
+
+        enemyOrder[0] = enemyTeam[0];
+        enemyOrder[1] = enemyTeam[1];
+        enemyOrder[2] = enemyTeam[2];
 
         uTurn.charId = charId;
 
@@ -75,6 +114,7 @@ public class GameManager : MonoBehaviour
         playerTeam[charId + 2].GetComponent<UnitTurn>().charId = charId + 2;
 
         Setup();
+        SetupEnemyHealthBar();
 
         nextPlayer = playerTeam[charId + 1];
         lastPlayer = playerTeam[charId + 2];
@@ -111,6 +151,11 @@ public class GameManager : MonoBehaviour
         uTurn.enabled = true;
         uTurn.SelectCharacter();
         playerStats = currentPlayer.GetComponent<PlayerStats>();
+        characterClass.text = playerStats.charClass;
+        characterHealth.text = playerStats.health + "/" + playerStats.maxHealth;
+        characterAmmo.text = playerStats.remainingAmmo + "/" + playerStats.ammo;
+        SetupPlayerHealthBar();
+        SetupPlayerAmmoBar();
     }
 
     void GetNextPlayer()                                //Gets the next player in line
@@ -125,6 +170,7 @@ public class GameManager : MonoBehaviour
             GameObject tempPlayer;
             tempPlayer = currentPlayer;
             currentPlayer = nextPlayer;
+            characterName.text = currentPlayer.name;
             Setup();
 
             playerActions.SetActive(playerTurn);
@@ -148,6 +194,7 @@ public class GameManager : MonoBehaviour
 
             //DeactivateCharacters();
             currentPlayer = playerTeam[tempId];
+            characterName.text = currentPlayer.name;
             if (currentPlayer == playerTeam[charId])
             {
                 nextPlayer = playerTeam[charId + 1];
@@ -171,6 +218,7 @@ public class GameManager : MonoBehaviour
             nextPlayer = currentPlayer;
             //DeactivateCharacters();
             currentPlayer = playerTeam[tempId];
+            characterName.text = currentPlayer.name;
             Setup();
         }
     }
@@ -189,6 +237,7 @@ public class GameManager : MonoBehaviour
         {
             if (enemyTurn == false)
             {
+                uTurn.enabled = playerTurn;
                 uTurn.charHalo.enabled = playerTurn;
                 playerCon.enabled = playerTurn;
                 if (uTurn.charAction == false)              //if the character can still do an action
@@ -227,11 +276,17 @@ public class GameManager : MonoBehaviour
         }
 
         currentPlayer = playerTeam[charId];
+        characterName.text = currentPlayer.name;
         camMove.player = currentPlayer;
         camMove.playerCam = currentPlayer.transform.GetChild(5).gameObject;
         uTurn = currentPlayer.GetComponent<UnitTurn>();
         playerCon = currentPlayer.GetComponent<PlayerController>();
         playerStats = currentPlayer.GetComponent<PlayerStats>();
+        characterClass.text = playerStats.charClass;
+        characterHealth.text = playerStats.health + "/" + playerStats.maxHealth;
+        characterAmmo.text = playerStats.remainingAmmo + "/" + playerStats.ammo;
+        SetupPlayerHealthBar();
+        SetupPlayerAmmoBar();
         nextPlayer = playerTeam[charId + 1];
         lastPlayer = playerTeam[charId + 2];
         playerTurn = false;
@@ -309,29 +364,58 @@ public class GameManager : MonoBehaviour
         GetNextPlayer();
     }
 
+    public void ReloadTurn()
+    {
+        if (playerStats.remainingAmmo == playerStats.ammo)
+        {
+            Debug.Log("Your ammo is already full");
+        }
+        else
+        {
+            playerStats.ReloadGun();
+            EndTurn();
+        }
+    }
+
+    public void CancelAttack()
+    {
+        enemyDisplay.SetActive(false);
+        enemyCam[eCount].SetActive(false);
+        if (camMove.freeMove == true)
+        {
+            camHolder.SetActive(true);
+        }
+        else
+        {
+            camMove.FlipCamera();
+            camHolder.SetActive(true);
+        }
+        playerActions.SetActive(true);
+    }
+
     public void AttackTurn()                                        //Attack button
     {
-        //need to flip off all the other switches so that the player can only attack
         uTurn.FindEnemies();
     }
 
     public void AttackEnemy()
     {
-        tempTeam[0].GetComponent<EnemyStats>().TakeDamage(playerStats.AttackDamage());
-        slider.value = tempTeam[0].GetComponent<EnemyStats>().health;
-        for(int i = 0; i < enemyCam.Length; i++)
+        DecreaseEnemyHealthBar(playerStats.AttackDamage());
+        DecreasePlayerAmmoBar();
+        for (int i = 0; i < enemyCam.Length; i++)
         {
             enemyCam[i].SetActive(false);
+            enemyTeam[i] = enemyOrder[i];
         }
         enemyDisplay.SetActive(false);
         camHolder.SetActive(true);
         EndTurn();
     }
 
-    public void CycleThroughEnemies(GameObject[] Team, int index)      //receives the enemies that are close to the player
+    public void CycleThroughEnemies()      //receives the enemies that are close to the player
     {
         playerActions.SetActive(false);
-        if(camHolder.GetComponent<CameraMove>().freeMove == true)
+        if (camHolder.GetComponent<CameraMove>().freeMove == true)
         {
             camHolder.SetActive(false);
         }
@@ -340,65 +424,157 @@ public class GameManager : MonoBehaviour
             camHolder.GetComponent<CameraMove>().FlipCamera();
             camHolder.SetActive(false);
         }
+
+        eCount = 0;
         enemyDisplay.SetActive(true);
-        enemyCam[index].SetActive(true);
-        eCount = index;
-        tempTeam = Team;
-        slider.maxValue = tempTeam[index].GetComponent<EnemyStats>().maxHealth;
-        slider.value = enemyTeam[index].GetComponent<EnemyStats>().health;
+        enemyCam[eCount].SetActive(true);
+        SetupEnemyHealthBar();
+        enemyName.text = enemyTeam[eCount].gameObject.name;
+        enemyHealth.text = enemyTeam[eCount].GetComponent<EnemyStats>().health + "/" + enemyTeam[eCount].GetComponent<EnemyStats>().maxHealth;
     }
 
     public void PreviousEnemy()                                             //cycles to the last nearEnemy in the array
     {
-        //int temp = tempTeam[charId];
         enemyCam[eCount].SetActive(false);
-        enemyCam[tempTeam[charId + 2].gameObject.GetComponent<UnitTurn>().charId].SetActive(true);
-        //slider.maxValue = tempTeam[charId + 2].GetComponent<EnemyStats>().maxHealth;
-        //slider.value = enemyTeam[charId + 2].GetComponent<EnemyStats>().health;
+        enemyCam[enemyTeam[charId + 2].gameObject.GetComponent<UnitTurn>().charId].SetActive(true);
         RotateEnemyTeam(2);
     }
 
     public void NextEnemy()                                                 //cycles to the next nearEnemy in the array
     {
         enemyCam[eCount].SetActive(false);
-        enemyCam[tempTeam[charId + 1].gameObject.GetComponent<UnitTurn>().charId].SetActive(true);
-        //slider.maxValue = tempTeam[charId + 1].GetComponent<EnemyStats>().maxHealth;
-        //slider.value = enemyTeam[charId + 1].GetComponent<EnemyStats>().health;
+        enemyCam[enemyTeam[charId + 1].GetComponent<UnitTurn>().charId].SetActive(true);
         RotateEnemyTeam(1);
     }
 
     void RotateEnemyTeam(int dummy)                                 //shifts the nearEnemy array
     {
-        
+
         if (dummy == 2)
         {
-            GameObject[] dummyTemp = new GameObject[tempTeam.Length];
-            dummyTemp[0] = tempTeam[dummy];
-            dummyTemp[1] = tempTeam[0];
-            dummyTemp[2] = tempTeam[dummy - 1];
-            for (int i = 0; i < tempTeam.Length; i++)
+            GameObject[] dummyTemp = new GameObject[enemyTeam.Length];
+            dummyTemp[0] = enemyTeam[dummy];
+            dummyTemp[1] = enemyTeam[0];
+            dummyTemp[2] = enemyTeam[dummy - 1];
+            for (int i = 0; i < enemyTeam.Length; i++)
             {
-                tempTeam[i] = dummyTemp[i];
+                enemyTeam[i] = dummyTemp[i];
             }
-            eCount = tempTeam[0].gameObject.GetComponent<UnitTurn>().charId;
-            slider.maxValue = tempTeam[0].GetComponent<EnemyStats>().maxHealth;
-            slider.value = tempTeam[0].GetComponent<EnemyStats>().health;
+            eCount = enemyTeam[0].gameObject.GetComponent<UnitTurn>().charId;
+            enemyName.text = enemyTeam[0].gameObject.name;
+            enemyHealth.text = enemyTeam[eCount].GetComponent<EnemyStats>().health + "/" + enemyTeam[eCount].GetComponent<EnemyStats>().maxHealth;
+            SetupEnemyHealthBar();
         }
-        else if(dummy == 1)
+        else if (dummy == 1)
         {
-            GameObject[] dummyTemp = new GameObject[tempTeam.Length];
-            dummyTemp[0] = tempTeam[dummy];
-            dummyTemp[1] = tempTeam[dummy + 1];
-            dummyTemp[2] = tempTeam[0];
-            
-            for (int i = 0; i < dummyTemp.Length; i++)
+            GameObject[] dummyTemp = new GameObject[enemyTeam.Length];
+            dummyTemp[0] = enemyTeam[dummy];
+            dummyTemp[1] = enemyTeam[dummy + 1];
+            dummyTemp[2] = enemyTeam[0];
+
+            for (int i = 0; i < enemyTeam.Length; i++)
             {
-                tempTeam[i] = dummyTemp[i];
+                enemyTeam[i] = dummyTemp[i];
             }
-            eCount = tempTeam[0].gameObject.GetComponent<UnitTurn>().charId;
-            slider.maxValue = tempTeam[0].GetComponent<EnemyStats>().maxHealth;
-            slider.value = tempTeam[0].GetComponent<EnemyStats>().health;
+            eCount = enemyTeam[0].gameObject.GetComponent<UnitTurn>().charId;
+            enemyName.text = enemyTeam[0].gameObject.name;
+            enemyHealth.text = enemyTeam[eCount].GetComponent<EnemyStats>().health + "/" + enemyTeam[eCount].GetComponent<EnemyStats>().maxHealth;
+            SetupEnemyHealthBar();
         }
+    }
+
+    public void SetupPlayerHealthBar()
+    {
+        int temp = playerStats.health;
+        int temp1 = temp / 5;
+
+        for(int i = 0; i < healthImages.Length; i++)
+        {
+            healthImages[i].GetComponent<Image>().sprite = emptyBar.sprite;
+        }
+        for(int i = 0; i < temp1; i++)
+        {
+            healthImages[i].GetComponent<Image>().sprite = healthBar.sprite;
+        }
+    }
+
+    public void DecreasePlayerHealthBar(int damage)
+    {
+        int temp = playerStats.TakeDamage(damage);
+        int temp1 = temp / 5;
+        int temp2 = healthImages.Length - temp1;
+
+        for(int i = 0; i < temp1; i++)
+        {
+            healthImages[i].GetComponent<Image>().sprite = healthBar.sprite;
+        }
+        for (int i = healthImages.Length - temp2; i < healthImages.Length; i++)
+        {
+            healthImages[i].GetComponent<Image>().sprite = emptyBar.sprite;
+        }
+    }
+
+    public void SetupPlayerAmmoBar()
+    {
+        int temp = playerStats.remainingAmmo;
+        int temp1 = temp / playerStats.fireRate; //4/1=4
+        int temp2 = ammoImages.Length / temp1; //12/4 = 3
+
+        for(int i = 0; i < ammoImages.Length; i++)
+        {
+            ammoImages[i].GetComponent<Image>().sprite = emptyBar.sprite;
+        }
+        for(int i = 0; i < playerStats.remainingAmmo; i++)
+        {
+            ammoImages[i].GetComponent<Image>().sprite = ammoBar.sprite;
+        }
+        
+    }
+
+    public void DecreasePlayerAmmoBar()
+    {
+        int temp = playerStats.FireGun();
+
+        for(int i = 0; i < temp; i++)
+        {
+            ammoImages[i].GetComponent<Image>().sprite = ammoBar.sprite;
+        }
+        for(int i = temp; i < ammoImages.Length; i++)
+        {
+            ammoImages[i].GetComponent<Image>().sprite = emptyBar.sprite;
+        }
+    }
+
+    public void SetupEnemyHealthBar()
+    {
+        int temp = enemyTeam[0].GetComponent<EnemyStats>().health;
+        int temp1 = temp / 5;
+
+        for(int i = 0; i < enemyImages.Length; i++)
+        {
+            enemyImages[i].GetComponent<Image>().sprite = emptyBar.sprite;
+        }
+        for(int i = 0; i < temp1; i++)
+        {
+            enemyImages[i].GetComponent<Image>().sprite = enemyBar.sprite;
+        }
+    }
+
+    public void DecreaseEnemyHealthBar(int damage)
+    {
+        int temp = enemyTeam[0].GetComponent<EnemyStats>().TakeDamage(damage);
+        int temp1 = temp / 5;
+        int temp2 = enemyImages.Length - temp1;
+
+        for(int i = 0; i < temp1; i++)
+        {
+            enemyImages[i].GetComponent<Image>().sprite = enemyBar.sprite;
+        }
+        for(int i = enemyImages.Length - temp2; i < enemyImages.Length; i++)
+        {
+            enemyImages[i].GetComponent<Image>().sprite = emptyBar.sprite;
+        }
+
     }
 
     public void MasterKey()
