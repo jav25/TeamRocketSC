@@ -58,7 +58,7 @@ public class CameraMove : MonoBehaviour
 
     void Update()
     {
-        camHeight = new Vector3(transform.position.x, currHeight, transform.position.z); //sets the height of the Camera holder
+        camHeight = new Vector3(transform.position.x, currHeight, transform.position.z ); //sets the height of the Camera holder
 
         charDistance = player.transform.position + offset;  //calculates the distance the camera will be behind a character
 

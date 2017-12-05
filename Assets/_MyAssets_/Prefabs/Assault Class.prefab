@@ -737,7 +737,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &1621659203146248
 GameObject:
   m_ObjectHideFlags: 1
@@ -2609,10 +2609,11 @@ MonoBehaviour:
   - {fileID: 0}
   charHalo: {fileID: 122794432138873228}
   charMove: 0
-  charTurn: 0
-  charSelect: 0
-  charAction: 0
+  charTurn: 1
+  charSelect: 1
+  charAction: 1
   charEnable: 0
+  destinationSet: 0
   exitTrigger: 0
   currentVel: 0
   moveDistance: 4
@@ -2622,7 +2623,6 @@ MonoBehaviour:
   currentSpot: {x: 0, y: 0, z: 0}
   rayDistance: {x: 0, y: 0, z: 0}
   move: {x: 0, y: 0, z: 0}
-  groundNormal: {x: 0, y: 0, z: 0}
   otherPlayer1: {fileID: 1232130007053956, guid: 37c9aafb9196e464c947ca50e80ebe54,
     type: 2}
   otherPlayer2: {fileID: 1987333080108154, guid: 4eaa5b1df7a03d047ab59629e24a6732,
@@ -2643,14 +2643,17 @@ MonoBehaviour:
   maxHealth: 100
   health: 0
   coverBonus: 0
-  weaponAttack: 10
+  armor: 0
+  weaponDamage: 0
+  weaponDistance: 0
   distanceDecrease: 0
-  damage: 0
+  attack: 0
   accuracy: 0
   ammo: 0
   remainingAmmo: 0
   fireRate: 0
   charClass: Assault
+  maxDistance: 12
   gm: {fileID: 1136721251600442, guid: 19f702e5b205dd94ba598533f0a8c499, type: 2}
 --- !u!114 &114816363949677852
 MonoBehaviour:
@@ -2677,7 +2680,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1078570511020664}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a6901909165093e45abfe2d303c90910, type: 3}
   m_Name: 
@@ -2770,6 +2773,7 @@ LineRenderer:
     numCapVertices: 0
     alignment: 0
     textureMode: 0
+    generateLightingData: 0
   m_UseWorldSpace: 1
   m_Loop: 0
 --- !u!122 &122794432138873228
@@ -2778,7 +2782,7 @@ Halo:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1733554371830244}
-  m_Enabled: 0
+  m_Enabled: 1
   m_Color:
     serializedVersion: 2
     rgba: 4286611584
