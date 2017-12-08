@@ -150,6 +150,11 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(Input.GetButtonDown("Test Fire"))
+        {
+            humanWin = true;
+            EndGame();
+        }
         if (masterKey == false)
         {
             if (playerTurn == true)
