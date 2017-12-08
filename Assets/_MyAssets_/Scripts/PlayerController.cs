@@ -34,6 +34,7 @@ public class PlayerController : MonoBehaviour
 
     public void UpdateMove(Vector3 move, Vector3 target, float speed)
     {
+        anim.SetBool("Aim", false);
         currentVel = speed;
         if (currentVel != 0)
         {
@@ -98,7 +99,7 @@ public class PlayerController : MonoBehaviour
     public void CharacterAim()
     {
         anim.SetBool("Aim", true);
-        if (tempDir == 1)
+        /*if (tempDir == 1)
         {
             StartCoroutine(RotateToFaceDirection(Vector3.forward));
         }
@@ -113,7 +114,7 @@ public class PlayerController : MonoBehaviour
         else if (tempDir == 2)
         {
             StartCoroutine(RotateToFaceDirection(-Vector3.right));
-        }
+        }*/
     }
 
     public void OnTriggerEnter(Collider other)

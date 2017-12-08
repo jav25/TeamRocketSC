@@ -43,6 +43,8 @@ public class CameraMove : MonoBehaviour
 
     RaycastHit hit;
 
+    public bool gameOver = false;
+
     public bool masterkey;
 
     void Start()
@@ -62,9 +64,12 @@ public class CameraMove : MonoBehaviour
 
         charDistance = player.transform.position + offset;  //calculates the distance the camera will be behind a character
 
-        if (flag == true)
+        if (!gameOver)
         {
-            Refresh();
+            if (flag == true)
+            {
+                Refresh();
+            }
         }
     }
 

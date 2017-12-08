@@ -16,6 +16,7 @@ public class UnitTurn : MonoBehaviour
 
     private PlayerController playerCon;
     private PlayerStats playerStats;
+    private EnemyStats enemyStats;
     private MoveDistance moveDis;
     private CameraMove camMove;
     private GameManager gameManager;
@@ -24,6 +25,10 @@ public class UnitTurn : MonoBehaviour
     public GameObject line;                                         //The Characters move line
     public GameObject gm;
     public GameObject[] enemy = new GameObject[3];                  //An array of enemies
+    public GameObject gun;
+    public GameObject special;
+
+    public int specialCount = 0;
 
     public Behaviour charHalo;
 
@@ -54,6 +59,10 @@ public class UnitTurn : MonoBehaviour
     public Vector3 otherVector1;                                    //The other characters Vectors
     public Vector3 otherVector2;
 
+    public string team;
+
+    public bool isDead = false;
+
 
     void Awake()
     {
@@ -68,6 +77,7 @@ public class UnitTurn : MonoBehaviour
         playerCon = gameObject.GetComponent<PlayerController>();
 
         playerStats = gameObject.GetComponent<PlayerStats>();
+        enemyStats = gameObject.GetComponent<EnemyStats>();
 
         charMove = false;
         charTurn = false;
@@ -81,6 +91,7 @@ public class UnitTurn : MonoBehaviour
         otherVector1 = new Vector3(otherPlayer1.transform.position.x, otherPlayer1.transform.position.y, otherPlayer1.transform.position.z);
         otherVector2 = new Vector3(otherPlayer2.transform.position.x, otherPlayer2.transform.position.y, otherPlayer2.transform.position.z);
 
+        team = gameObject.tag;
     }
 
     public void SelectCharacter()
@@ -158,37 +169,46 @@ public class UnitTurn : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        RaycastHit hit;
-
-        if (charSelect == true && camMove.freeMove == true)
+        if (!gameManager.gameOver)
         {
-            if (Input.GetButtonDown("Left Click") && gameManager.currentPlayer.GetComponent<UnitTurn>().destinationSet == false)
+            if (!isDead)
             {
-                if (Physics.Raycast(ray, out hit))
-                {
-                    if (hit.transform.tag == "Player" && hit.transform.gameObject != gameManager.currentPlayer)
-                    {
-                        if (hit.transform.gameObject.GetComponent<UnitTurn>().charSelect == false)
-                        {
+                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                RaycastHit hit;
 
-                        }
-                        else
+                if (charSelect == true && camMove.freeMove == true)
+                {
+                    if (Input.GetButtonDown("Left Click") && gameManager.currentPlayer.GetComponent<UnitTurn>().destinationSet == false)
+                    {
+                        if (Physics.Raycast(ray, out hit))
                         {
-                            gameManager.currentPlayer.GetComponent<UnitTurn>().rayId = hit.transform.gameObject.GetComponent<UnitTurn>().charId;
-                            UnActive();
-                            gameManager.ChangeCharacters();
+                            if (hit.transform.tag == gameObject.transform.tag && hit.transform.gameObject != gameManager.currentPlayer)
+                            {
+                                if (hit.transform.gameObject.GetComponent<UnitTurn>().charSelect == false)
+                                {
+
+                                }
+                                else
+                                {
+                                    gameManager.currentPlayer.GetComponent<UnitTurn>().rayId = hit.transform.gameObject.GetComponent<UnitTurn>().charId;
+                                    UnActive();
+                                    gameManager.ChangeCharacters();
+                                }
+                            }
                         }
                     }
                 }
+                else if (charMove == true)
+                {
+                    MoveCharacter();
+                }
             }
+            /*else if (isDead == "Yes")
+            {
+                Debug.Log("TEST");
+                //gameManager.EndTurn();
+            }*/
         }
-        else if (charMove == true)
-        {
-            MoveCharacter();
-        }
-
     }
 
     public void MoveCharacter()
@@ -283,31 +303,63 @@ public class UnitTurn : MonoBehaviour
 
     public void FindEnemies()                                       //Searches for nearby enemies
     {
-        //if (team == "Player")
-        //{
-            enemy = GameObject.FindGameObjectsWithTag("Enemy");
-        //}
-        //else if(team == "Enemy")
-        //{
-        //    enemy = GameObject.FindGameObjectsWithTag("Player");
-        //}
-
-        if(enemy.Length != 0)
+        if (team == "Player")
         {
-            index = 2;
-            for(int i = 0; i < enemy.Length; i++)
+            enemy = GameObject.FindGameObjectsWithTag("Enemy");
+            if (enemy.Length != 0)
             {
-                if(Vector3.Distance(currentSpot, enemy[i].transform.position) > playerStats.maxDistance)
+                index = 2;
+                for (int i = 0; i < enemy.Length; i++)
                 {
-                    //Display enemy is too far 0% chance of hit
-                    Debug.Log(enemy[i]);
-                }
-                else
-                {
-                    gameManager.CycleThroughEnemies();
+                    if (Vector3.Distance(currentSpot, enemy[i].transform.position) > playerStats.maxDistance)
+                    {
+                        //Display enemy is too far 0% chance of hit
+                        Debug.Log(enemy[i]);
+                    }
+                    else
+                    {
+                        gameManager.CycleThroughEnemies();
+                    }
                 }
             }
         }
+        else if(team == "Enemy")
+        {
+            enemy = GameObject.FindGameObjectsWithTag("Player");
+            if (enemy.Length != 0)
+            {
+                index = 2;
+                for (int i = 0; i < enemy.Length; i++)
+                {
+                    if (Vector3.Distance(currentSpot, enemy[i].transform.position) > enemyStats.maxDistance)
+                    {
+                        //Display enemy is too far 0% chance of hit
+                        Debug.Log(enemy[i]);
+                    }
+                    else
+                    {
+                        gameManager.CycleThroughEnemies();
+                    }
+                }
+            }
+        }
+
+        //if(enemy.Length != 0)
+        //{
+        //    index = 2;
+        //    for(int i = 0; i < enemy.Length; i++)
+        //    {
+        //        if(Vector3.Distance(currentSpot, enemy[i].transform.position) > playerStats.maxDistance)
+        //        {
+        //            //Display enemy is too far 0% chance of hit
+        //            Debug.Log(enemy[i]);
+        //        }
+        //        else
+        //        {
+        //            gameManager.CycleThroughEnemies();
+        //        }
+        //    }
+        //}
 
         //enemy = GameObject.FindGameObjectsWithTag("Enemy");
         //if (enemy.Length != 0)                                                              //if an enemy is found

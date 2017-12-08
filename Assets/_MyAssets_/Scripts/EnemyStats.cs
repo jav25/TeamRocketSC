@@ -12,12 +12,23 @@ public class EnemyStats : MonoBehaviour {
 
     public int maxHealth = 105;
     public int health;
-    public int attack = 10;
     public int coverBonus;
-    public int accurracy;
+    public int armor;
+
+    public int weaponDamage;
+    public int weaponDistance;
+    public int weaponAccuracy;
+    public int distanceDecrease;
+    public int attack;
+    public int accuracy;
+
     public int ammo;
+    public int remainingAmmo;
+    public int fireRate;
 
     public string charClass;
+
+    public int maxDistance = 12;
 
     public GameObject gm;
 
@@ -25,22 +36,111 @@ public class EnemyStats : MonoBehaviour {
 	void Start () {
         gameManager = gm.GetComponent<GameManager>();
         health = maxHealth;
-	}
+
+        if (charClass == "Assault")
+        {
+            ammo = 12;
+            remainingAmmo = ammo;
+            fireRate = 3;
+            weaponDistance = 8; //if an enemy character is within the weaponDistance increase the accuracy
+            weaponDamage = 10;
+            weaponAccuracy = 26;
+            armor = 10;
+        }
+        else if (charClass == "Heavy")
+        {
+            ammo = 12;
+            remainingAmmo = ammo;
+            fireRate = 3;
+            weaponDistance = 8;
+            weaponDamage = 15;
+            weaponAccuracy = 50;
+            armor = 15;
+        }
+        else if (charClass == "Ranger")
+        {
+            ammo = 12;
+            remainingAmmo = ammo;
+            fireRate = 3;
+            weaponDistance = 12;
+            weaponDamage = 10;
+            weaponAccuracy = 10;
+            armor = 8;
+        }
+    }
 	
 	// Update is called once per frame
 	void Update () {
-        GetHealth();
+        UpdateStats();
 	}
+
+    void UpdateStats()
+    {
+        GetHealth();
+        GetAmmo();
+    }
 
     int GetHealth()
     {
         return health;
     }
 
+    int GetAmmo()
+    {
+        return remainingAmmo;
+    }
+
+    public int AttackDamage(int weapAccuracy)
+    {
+        int tempChance = Random.Range(0, weaponAccuracy);
+        if(tempChance <= weapAccuracy)
+        {
+            if(weapAccuracy < weaponAccuracy)
+            {
+                attack = weaponDamage / weapAccuracy;
+                return attack;
+            }
+            else
+            {
+                attack = weaponDamage;
+                return attack;
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
+    public int FireGun()
+    {
+        remainingAmmo -= fireRate;
+        return remainingAmmo;
+    }
+
+    public void ReloadGun()
+    {
+        remainingAmmo = ammo;
+    }
+
     public int TakeDamage(int damage)
     {
         health -= damage;
         return health;
+    }
+
+    public int CalculateHit(Vector3 enemyDistance)
+    {
+        if(Vector3.Distance(gameObject.transform.position, enemyDistance) > weaponDistance)
+        {
+            accuracy = weaponAccuracy;
+            return accuracy;
+        }
+        else
+        {
+            accuracy = weaponAccuracy;
+            return accuracy;
+        }
     }
 
 }
